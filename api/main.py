@@ -17,12 +17,12 @@ async def on_startup():
     print("⏳ Veritabanı tabloları oluşturuluyor...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("✅ Veritabanı hazır.")
+    print("Veritabanı hazır.")
 
     # Global olarak recommender başlat
     global recommender
     recommender = ContentBasedRecommender()
-    print("✅ İçerik tabanlı önerici başlatıldı.")
+    print("İçerik tabanlı önerici başlatıldı.")
 
 @app.get("/recommendations/content/")
 def recommend(
