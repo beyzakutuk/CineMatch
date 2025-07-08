@@ -1,0 +1,13 @@
+# requirements.txt
+
+pandas
+numpy
+scikit-learn
+scipy
+scikit-surprise
+fastapi
+uvicorn
+joblib
+python-dotenv
+asyncpg
+sqlalchemy[asyncio]
