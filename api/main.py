@@ -1,5 +1,4 @@
 # api/main.py
-
 from fastapi import FastAPI, Query
 from db.model import Base
 from db.database import engine
@@ -7,7 +6,7 @@ from api.endpoints import router as api_router
 from recommender.content_based import ContentBasedRecommender
 
 app = FastAPI(
-    title="Content-Based Movie Recommender",
+    title="CineMatch - Content-Based Recommender",
     description="Film/dizi başlığına göre benzer içerikleri öneren API",
     version="1.0"
 )

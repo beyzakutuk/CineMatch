@@ -1,5 +1,5 @@
  # db/models.py
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from db.database import Base  
 
@@ -14,13 +14,24 @@ class User(Base):
 
 class Title(Base):
     __tablename__ = "titles"
+    __table_args__ = (UniqueConstraint("name", "platform", name="unique_title_platform"),)
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    description = Column(String)
+    show_id = Column(String, unique=True, nullable=False) 
+    name = Column(String, nullable=False)
+    type = Column(String)  # Movie, TV Show
+    director = Column(String)
+    cast = Column(Text)
+    country = Column(String)
+    date_added = Column(Date)  
+    release_year = Column(Integer)
+    rating = Column(String)
+    duration = Column(String)
+    listed_in = Column(String)  # Genre
+    description = Column(Text)
+    platform = Column(String)
 
     favorites = relationship("Favorite", back_populates="title")
-
 
 class Favorite(Base):
     __tablename__ = "favorites"
