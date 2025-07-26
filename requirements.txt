@@ -11,3 +11,6 @@ joblib
 python-dotenv
 asyncpg
 sqlalchemy[asyncio]
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart

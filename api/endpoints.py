@@ -10,17 +10,6 @@ router = APIRouter()
 
 from sqlalchemy.exc import IntegrityError
 
-@router.post("/users/")
-async def create_user(username: str, db: AsyncSession = Depends(get_db)):
-    new_user = User(username=username)
-    db.add(new_user)
-    try:
-        await db.commit()
-        await db.refresh(new_user)
-    except IntegrityError:
-        raise HTTPException(status_code=400, detail="Bu kullanıcı adı zaten var.")
-    return {"message": "Kullanıcı oluşturuldu", "user_id": new_user.id}
-
 @router.get("/titles/")
 async def list_titles(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Title))
