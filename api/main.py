@@ -2,7 +2,8 @@
 from fastapi import FastAPI, Query
 from db.model import Base
 from db.database import engine
-from api.endpoints import router as api_router
+from api.endpoints import router as endpoints_router
+from api.auth import router as auth_router
 from recommender.content_based import ContentBasedRecommender
 
 app = FastAPI(
@@ -34,4 +35,5 @@ def recommend(
     return results
 
 # Diğer API endpointlerini dahil et
-app.include_router(api_router)
+app.include_router(endpoints_router, prefix="/api")
+app.include_router(auth_router, prefix="/auth")
