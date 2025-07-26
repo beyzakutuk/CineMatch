@@ -14,3 +14,4 @@ sqlalchemy[asyncio]
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
+pydantic[email]
