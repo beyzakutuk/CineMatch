@@ -2,34 +2,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from pydantic import BaseModel, EmailStr, validator
-from auth.utils import hash_password, create_access_token
+from auth.utils import hash_password, create_access_token, verify_password
 from db.model import User
 from db.database import get_db
-import re
+from schemas.auth_schema import RegisterRequest, LoginRequest,TokenResponce
 
 router = APIRouter()
-
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    username: str
-    password: str
     
-    @validator("password")
-    def validate_password(cls, value):
-        if len(value) < 8:
-            raise ValueError("Şifre en az 8 karakter olmalıdır.")
-        if not re.search(r"[A-Z]", value):
-            raise ValueError("Şifre en az bir büyük harf içermelidir.")
-        if not re.search(r"[a-z]", value):
-            raise ValueError("Şifre en az bir küçük harf içermelidir.")
-        if not re.search(r"\d", value):
-            raise ValueError("Şifre en az bir rakam içermelidir.")
-        if not re.search(r"[!@#$%^&*()_\+\-=\[\]{}|;:'\",.<>?/]", value):
-            raise ValueError("Şifre en az bir özel karakter içermelidir.")
-        return value
-    
-@router.post("/register")
+@router.post("/register", response_model=TokenResponce)
 async def register_user(user_data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     existing_user = await db.execute(
         select(User).where(
@@ -59,5 +39,15 @@ async def register_user(user_data: RegisterRequest, db: AsyncSession = Depends(g
     token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
 
+
+@router.post("/login", response_model=TokenResponce)
+async def login_user(login_data: LoginRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.username == login_data.username))
+    user = result.scalar_one_or_none()
     
+    if not user or not verify_password(login_data.password, user.password):
+        raise HTTPException(status_code=401, detail="Girilen kullanıcı bilgileri geçersiz.")
+    
+    token = create_access_token(data={"sub": str(user.id)})
+    return {"access_token": token, "token_type": "bearer"}
     
