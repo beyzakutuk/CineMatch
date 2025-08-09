@@ -22,12 +22,17 @@ def parse_date(date_str):
 
 
 async def import_data():
+    
+    async with async_session() as session:
+        result = await session.execute(select(Title).limit(1))
+        existing = result.scalar_one_or_none()
+        if existing:
+            print("Veri zaten mevcut, import işlemi atlandı.")
+            return
+    
     print("combined_titles.csv dosyası yükleniyor...")
     df = pd.read_csv("data/combined_titles.csv")
     df.dropna(subset=["title", "platform"], inplace=True)
-    
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
     async with async_session() as session:
         count = 0
@@ -36,7 +41,7 @@ async def import_data():
             platform = clean_value(row.get("platform"))
 
             if not title_name or not platform:
-                continue  # zorunlu alanlar boşsa atla
+                continue 
 
             stmt = select(Title).where(
                 Title.name == title_name,
@@ -69,7 +74,7 @@ async def import_data():
             count += 1
             session.add(title)
         await session.commit()
-        print(f"✅ {count} içerik veritabanına eklendi.")
+        print(f"{count} içerik veritabanına eklendi.")
 
 if __name__ == "__main__":
     asyncio.run(import_data())

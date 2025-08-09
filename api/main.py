@@ -5,6 +5,7 @@ from db.database import engine
 from api.endpoints import router as endpoints_router
 from api.auth import router as auth_router
 from recommender.content_based import ContentBasedRecommender
+from data.import_titles import import_data
 
 app = FastAPI(
     title="CineMatch - Content-Based Recommender",
@@ -19,7 +20,8 @@ async def on_startup():
         await conn.run_sync(Base.metadata.create_all)
     print("Veritabanı hazır.")
 
-    # Global olarak recommender başlat
+    await import_data() 
+    
     global recommender
     recommender = ContentBasedRecommender()
     print("İçerik tabanlı önerici başlatıldı.")
