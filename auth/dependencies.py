@@ -7,7 +7,7 @@ from db.database import get_db
 from db.model import User
 from auth.utils import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(token_url = "login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "token")
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
     user_id = decode_access_token(token)
