@@ -25,3 +25,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode.update({"exp":expire_time})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub")
+    except JWTError:
+        return None
