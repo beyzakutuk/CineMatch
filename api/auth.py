@@ -5,7 +5,8 @@ from sqlalchemy.future import select
 from auth.utils import hash_password, create_access_token, verify_password
 from db.model import User
 from db.database import get_db
-from schemas.auth_schema import RegisterRequest, LoginRequest,TokenResponce
+from schemas.auth_schema import RegisterRequest, LoginRequest, TokenResponce
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()
     
@@ -51,3 +52,13 @@ async def login_user(login_data: LoginRequest, db: AsyncSession = Depends(get_db
     token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
     
+@router.post("/token", response_model=TokenResponce)
+async def login_with_form(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.username == form_data.username))
+    user = result.scalar_one_or_none()
+    
+    if not user or not verify_password(form_data.password, user.password):
+        raise HTTPException(status_code=401, detail="Girilen kullanıcı bilgileri geçersiz.")
+    
+    token = create_access_token(data={"sub": str(user.id)})
+    return {"access_token": token, "token_type": "bearer"}
