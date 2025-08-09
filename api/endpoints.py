@@ -37,3 +37,18 @@ async def get_user_favorites(db: AsyncSession = Depends(get_db), current_user: U
     
     favorites = result.scalars().all()
     return [{"title_id": fav.title_id, "title_name": fav.title.name} for fav in favorites]
+
+@router.delete("/favorites/")
+async def remove_favorite(title_id: int, db: AsyncSession=Depends(get_db), current_user: User = Depends(get_current_user)):
+    result = await db.execute(
+        select(Favorite).where(Favorite.user_id == current_user.id, Favorite.title_id == title_id)
+    )
+    
+    favorite = result.scalar_one_or_none()
+    
+    if not favorite:
+        raise HTTPException(status_code=404, detail="Favori Bulunamadı.")
+    
+    await db.delete(favorite)
+    await db.commit()
+    return {"message": "Favori Silindi."}
