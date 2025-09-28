@@ -1,6 +1,6 @@
 #schemas/title_schema.py
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class TitleOut(BaseModel):
     id: int
@@ -9,5 +9,10 @@ class TitleOut(BaseModel):
     type: str 
     description: Optional[str]
     
-    class Config: 
-        orm_mode = True
+class Config: 
+    orm_mode = True
+    
+class TitlesResponse(BaseModel):
+    total: int
+    titles: List[TitleOut]
+

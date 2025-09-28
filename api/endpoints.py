@@ -5,22 +5,22 @@ from sqlalchemy.future import select
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
-from typing import List
 
 from db.model import User, Title, Favorite
 from db.database import get_db
 from auth.dependencies import get_current_user
-from schemas.title_schema import TitleOut
+from schemas.title_schema import TitlesResponse
 
 router = APIRouter()
 
-@router.get("/titles/", response_model=List[TitleOut])
+@router.get("/titles/", response_model=TitlesResponse)
 async def list_titles(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Title))
     titles = result.scalars().all()
-    return titles
+    total = len(titles)
+    return {"total": total, "titles": titles}
 
-@router.get("/titles/search/", response_model=List[TitleOut])
+@router.get("/titles/search/", response_model=TitlesResponse)
 async def search_titles( 
     q: str = Query(..., min_length=1, description="Aranacak içerik"), db: AsyncSession = Depends(get_db)):
     stmt = select(Title).where(
@@ -36,7 +36,8 @@ async def search_titles(
     
     result = await db.execute(stmt)
     titles = result.scalars().all()
-    return titles
+    total = len(titles)
+    return {"total": total, "titles": titles}
 
 
 @router.post("/favorites/")
