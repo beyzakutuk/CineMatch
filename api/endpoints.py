@@ -1,21 +1,44 @@
 # api/endpoints.py
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
 from db.model import User, Title, Favorite
 from db.database import get_db
 from auth.dependencies import get_current_user
+from schemas.title_schema import TitlesResponse
 
 router = APIRouter()
 
-@router.get("/titles/")
+@router.get("/titles/", response_model=TitlesResponse)
 async def list_titles(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Title))
     titles = result.scalars().all()
-    return [{"id": t.id, "name": t.name} for t in titles]
+    total = len(titles)
+    return {"total": total, "titles": titles}
+
+@router.get("/titles/search/", response_model=TitlesResponse)
+async def search_titles( 
+    q: str = Query(..., min_length=1, description="Aranacak içerik"), db: AsyncSession = Depends(get_db)):
+    stmt = select(Title).where(
+        or_(
+            Title.name.ilike(f"%{q}%"),
+            Title.director.ilike(f"%{q}%"),
+            Title.cast.ilike(f"%{q}%"),
+            Title.description.ilike(f"%{q}%"),
+            Title.listed_in.ilike(f"%{q}%")
+        )
+        # genişletilebilir
+    )
+    
+    result = await db.execute(stmt)
+    titles = result.scalars().all()
+    total = len(titles)
+    return {"total": total, "titles": titles}
+
 
 @router.post("/favorites/")
 async def add_favorite(title_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
