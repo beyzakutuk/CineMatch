@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 from db.model import User, Title, Favorite
 from db.database import get_db
 from auth.dependencies import get_current_user
-from schemas.title_schema import TitlesResponse
+from schemas.title_schema import TitlesResponse, TitleDetail
 
 from recommender import recommender
 
@@ -21,6 +21,16 @@ async def list_titles(db: AsyncSession = Depends(get_db)):
     titles = result.scalars().all()
     total = len(titles)
     return {"total": total, "titles": titles}
+
+@router.get("/titles/{title_id}", response_model=TitleDetail)
+async def get_title_detail(title_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Title).where(Title.id == title_id))
+    title = result.scalar_one_or_none()
+    
+    if not title:
+        raise HTTPException(status_code=404, detail="İçerik bulunamadı.")
+    
+    return title
 
 @router.get("/titles/search/", response_model=TitlesResponse)
 async def search_titles( 
