@@ -61,6 +61,23 @@ def recommend_by_title(
         return {"message": f"Eşleşen içerik bulunamadı: {title}"}
     return results
 
+@router.get("/recommendations/favorites/")
+async def recommend_by_favorites( n: int = Query(5, description="gösterilecek içerik sayısı"), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    result = await db.execute(
+        select(Title.name).join(Favorite, Favorite.title_id == Title.id).where(Favorite.user_id == current_user.id)
+    )
+    
+    favorite_titles = [row[0] for row in result.all()]
+    if not favorite_titles:
+        return {"message": "favorilenen içerik bulunamadı"}
+    
+    recommendations = recommender.recommend_by_user_favorites(favorite_titles, n)
+    
+    return{
+        "based_on_favorites": favorite_titles,
+        "recommendations": recommendations
+    }
+    
 @router.post("/favorites/")
 async def add_favorite(title_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     fav = Favorite(user_id=current_user.id, title_id=title_id)
