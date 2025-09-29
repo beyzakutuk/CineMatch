@@ -26,17 +26,7 @@ async def on_startup():
     global recommender
     recommender = ContentBasedRecommender()
     print("İçerik tabanlı önerici başlatıldı.")
-
-@app.get("/recommendations/content/")
-def recommend(
-    title: str = Query(..., description="Öneri alınacak başlık"),
-    n: int = Query(5, description="Kaç adet öneri gösterilecek")
-):
-    results = recommender.recommend_by_title(title, n)
-    if not results:
-        return {"message": f"Eşleşen içerik bulunamadı: {title}"}
-    return results
-
+    
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema

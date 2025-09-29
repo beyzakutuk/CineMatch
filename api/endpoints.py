@@ -9,7 +9,9 @@ from sqlalchemy.orm import joinedload
 from db.model import User, Title, Favorite
 from db.database import get_db
 from auth.dependencies import get_current_user
-from schemas.title_schema import TitlesResponse
+from schemas.title_schema import TitlesResponse, TitleDetail
+
+from recommender import recommender
 
 router = APIRouter()
 
@@ -19,6 +21,16 @@ async def list_titles(db: AsyncSession = Depends(get_db)):
     titles = result.scalars().all()
     total = len(titles)
     return {"total": total, "titles": titles}
+
+@router.get("/titles/{title_id}", response_model=TitleDetail)
+async def get_title_detail(title_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Title).where(Title.id == title_id))
+    title = result.scalar_one_or_none()
+    
+    if not title:
+        raise HTTPException(status_code=404, detail="İçerik bulunamadı.")
+    
+    return title
 
 @router.get("/titles/search/", response_model=TitlesResponse)
 async def search_titles( 
@@ -39,7 +51,33 @@ async def search_titles(
     total = len(titles)
     return {"total": total, "titles": titles}
 
+@router.get("/recommendations/content/")
+def recommend_by_title(
+    title: str = Query(..., description="Öneri alınacak içerik"),
+    n: int = Query(5, description="gösterilecek öneri sayısı")
+):
+    results = recommender.recommend_by_title(title, n)
+    if not results:
+        return {"message": f"Eşleşen içerik bulunamadı: {title}"}
+    return results
 
+@router.get("/recommendations/favorites/")
+async def recommend_by_favorites( n: int = Query(5, description="gösterilecek içerik sayısı"), db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    result = await db.execute(
+        select(Title.name).join(Favorite, Favorite.title_id == Title.id).where(Favorite.user_id == current_user.id)
+    )
+    
+    favorite_titles = [row[0] for row in result.all()]
+    if not favorite_titles:
+        return {"message": "favorilenen içerik bulunamadı"}
+    
+    recommendations = recommender.recommend_by_user_favorites(favorite_titles, n)
+    
+    return{
+        "based_on_favorites": favorite_titles,
+        "recommendations": recommendations
+    }
+    
 @router.post("/favorites/")
 async def add_favorite(title_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     fav = Favorite(user_id=current_user.id, title_id=title_id)
@@ -75,3 +113,4 @@ async def remove_favorite(title_id: int, db: AsyncSession=Depends(get_db), curre
     await db.delete(favorite)
     await db.commit()
     return {"message": "Favori Silindi."}
+

@@ -14,9 +14,11 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
 
 def hash_password(password: str) -> str:
+    #password = password[:72]
     return pwd_context.hash(password)
 
 def verify_password(p_password, h_password) -> bool:
+    #p_password = p_password[:72] 
     return pwd_context.verify(p_password,h_password)
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
